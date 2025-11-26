@@ -6,6 +6,10 @@ app.get('/', (req,res) => {
     res.send('hello')
 });
 
+app.get('/twitter', (req,res) => {
+    res.send('hello for twitter')
+});
+
 
 app.listen(process.env.PORT, () => {
     console.log(`server running on http://localhost:${PORT} `)
