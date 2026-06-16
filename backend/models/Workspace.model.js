@@ -5,11 +5,11 @@ const workspaceSchema = new mongoose.Schema({
     name: {
         type:String,
         required: true,
-        maxlength: 100,
+        maxlength: 200,
     },
     description: {
         type:String,
-        maxlength: 1000
+        maxlength: 2000
     },
     owner: {
         type: mongoose.Schema.Types.ObjectId,
