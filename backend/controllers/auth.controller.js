@@ -1,6 +1,9 @@
 const bcrypt = require("bcryptjs");
 const User = require("../models/User.model");
 const { generateAccessToken } = require("../utils/generateToken");
+const { OAuth2Client } = require("google-auth-library");
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 exports.register = async (req, res) => {
   try {
@@ -99,3 +102,75 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
+
+exports.googleSignIn = async (req,res ) => {
+  try {
+    const { idToken } = req.body;
+
+    if(!idToken) {
+      return res.status(400).json({message: "Google ID is required."})
+    }
+
+    const ticket = await client.verifyIdToken ({
+      idToken, 
+      audience: process.env.GOOGLE_CLIENT_ID
+
+    });
+
+    const payload = ticket.getPayload();
+
+    const {
+      sub: googleId,
+      email, 
+      name,
+      picture,
+      email_verified,
+
+    } = payload;
+
+    if(!email_verified) {
+      return res.status(401).json({message:"Google email is not verified" });
+    };
+
+    let user = await User.findOne({
+      email: email.toLowerCase(),
+    });
+
+    if(user) {
+      if(!user.googleId){
+        user.googleId = googleId;
+      }
+      if(!user.avatar && picture) {
+        user.avatar = picture;
+      }
+      await user.save();
+
+    } else {
+      user = await User.create({
+        name,
+        email: email.toLowerCase(),
+        googleId,
+        avatar: picture,
+
+      })
+    }
+
+    const token = generateAccessToken(user._id);
+
+
+    res.status(200).json({
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
+        role: user.role,
+      }, token,
+    });
+  } catch (error) {
+    console.error(error) 
+    res.status(500).json({message: "google signin failed!"});
+  }
+}
