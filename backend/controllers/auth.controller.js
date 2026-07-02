@@ -120,6 +120,10 @@ exports.googleSignIn = async (req,res ) => {
     });
 
     const payload = ticket.getPayload();
+    if (!payload) {
+    return res.status(401).json({
+        message: "Invalid Google token",
+    });}
 
     const {
       sub: googleId,
@@ -174,3 +178,6 @@ exports.googleSignIn = async (req,res ) => {
     res.status(500).json({message: "google signin failed!"});
   }
 }
+
+
+
